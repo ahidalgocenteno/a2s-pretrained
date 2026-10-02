@@ -11,6 +11,7 @@ import glob
 import random
 import json
 import tqdm
+from sklearn.model_selection import train_test_split
 
 from my_utils.config import *
 
@@ -106,25 +107,39 @@ class AMTDataset(Dataset, ABC):
             with open(partition_file, "r") as f:
                 return [line.strip() for line in f]
             
-    def _create_partitions(self, all_ids, train_size=0.8, val_test_size=0.2, random_seed=42):
-        random.seed(random_seed)
-        random.shuffle(all_ids)
-        train = all_ids[:int(len(all_ids) * train_size)]
-        val = all_ids[int(len(all_ids) * train_size):int(len(all_ids) * (train_size + val_test_size))]
-        test = all_ids[int(len(all_ids) * (train_size + val_test_size)):]
 
-        print(f"Number of training samples: {len(train)}")
-        print(f"Number of test samples: {len(test)}")
-        print(f"Number of validation samples: {len(val)}")
+    def _create_partitions(
+        self, all_ids, train_size=0.7, val_test_size=0.15, random_seed=42
+    ):
+        if len(all_ids) < 3:
+            raise ValueError(
+                "At least three samples are required for non-empty train, val, "
+                "and test partitions."
+            )
 
-        # save to train.lst val.lst test.lst
-        for key, partition_ids in zip(["train", "val", "test"], [train, val, test]):
-            with open(os.path.join(self.root_dir, "partitions", f"{key}.lst"), "w") as f:
-                for file in partition_ids:
-                    f.write(file + "\n") 
-        print("Partitions saved!")
+        ids = list(all_ids)
 
-        return {"train": train, "val": val, "test": test}
+        # First split: train vs (val + test)
+        train_ids, rest_ids = train_test_split(
+            ids, train_size=train_size, random_state=random_seed, shuffle=True
+        )
+        
+        val_fraction_of_rest = val_test_size / (1 - train_size)
+        val_ids, test_ids = train_test_split(
+            rest_ids, train_size=val_fraction_of_rest, random_state=random_seed, shuffle=True
+        )
+
+        partitions = {
+            "train": train_ids,
+            "val": val_ids,
+            "test": test_ids,
+        }
+
+        print(f"Number of training samples: {len(partitions['train'])}")
+        print(f"Number of validation samples: {len(partitions['val'])}")
+        print(f"Number of test samples: {len(partitions['test'])}")
+
+        return partitions
     
     def _save_partitions(self, partitions_dict):
         partitions_dirs = {
