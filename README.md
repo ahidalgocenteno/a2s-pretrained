@@ -4,7 +4,7 @@
 
 <h1 align='center'>On the use of Pre-Trained Audio Encoders for Audio-to-Score Music Transcription</h1>
 
-<h4 align='center'>Full text available <a href='https://ismir2026program.ismir.net/' target='_blank'>here</a>.</h4>
+<h4 align='center'>Full text available <a href='https://ismir2026program.ismir.net/poster_164.html#paper' target='_blank'>here</a>.</h4>
 
 <p align='center'>
   <img src='https://img.shields.io/badge/python-3.11.12-orange' alt='Python'>
